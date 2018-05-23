@@ -2,25 +2,17 @@
 import got.manager
 import csv
 from timeit import default_timer as timer
+import datetime
 from datetime import datetime
+from datetime import timedelta
 
-dates_monday = {
-    '2018-04-01': '2018-04-02',
-    '2018-04-08': '2018-04-09',
-    '2018-04-15': '2018-04-16',
-    '2018-04-22': '2018-04-23',
-    '2018-04-29': '2018-04-30'
-}
-# dates_wednesday = {'2018-04-03': '2018-04-04', '2018-04-10': '2018-04-11', '2018-04-17': '2018-04-18', '2018-04-24': '2018-04-25', '2018-05-01': '2018-05-02'}
-# dates_friday = {'2018-04-05': '2018-04-06', '2018-04-12': '2018-04-13', '2018-04-19': '2018-04-20', '2018-04-26': '2018-04-27', '2018-05-03': '2018-05-04'}
-
-
-def search_and_write(file_name, s, u):
+def search_and_write(file_name, day_before, monday):
 
     start_time = datetime.fromtimestamp(timer())
     print("Start collecting Tweets at %s" % start_time.strftime('%H:%M:%S'))
-    tweetCri = got.manager.TweetCriteria().setQuerySearch('trump').setSince(s).setUntil(u).setMaxTweets(10000)
-    print('start searching', until)
+    tweetCri = got.manager.TweetCriteria().setUsername('realDonaldTrump').setSince(str(day_before.date())).setUntil(str(monday.date())).setMaxTweets(100)
+    # tweetCri = got.manager.TweetCriteria().setQuerySearch('trump').setSince(str(day_before.date())).setUntil(str(monday.date())).setMaxTweets(10000)
+    print('start searching', monday.date())
     tweets = got.manager.TweetManager.getTweets(tweetCri)
 
     end_time_tweets = datetime.fromtimestamp(timer())
@@ -38,19 +30,12 @@ def search_and_write(file_name, s, u):
     print("End writing Tweets at %s" % end_time.strftime('%H:%M:%S'))
 
 
-print('Mondays')
-for since in dates_monday:
-    until = dates_monday[since]
-    search_and_write('tweets_test_monday_' + until + '.csv', since, until)
+monday = datetime(2017, 10, 30, 00, 00)  # first monday
+day_before_monday = datetime(2017, 10, 29, 00, 00)  # first monday
 
-
-# print('Wednesdays')
-# for since in dates_wednesday:
-#     until = dates_wednesday[since]
-#     search_and_write('tweets_test_wednesday_' + until + '.csv', since, until)
-#
-#
-# print('Fridays')
-# for since in dates_friday:
-#     until = dates_wednesday[since]
-#     search_and_write('tweets_test_friday_' + until + '.csv', since, until)
+for count in range(26):
+    print(monday)
+    search_and_write('users/tweets_test_monday_' + str(monday.date()) + '.csv', day_before_monday, monday)
+    # search_and_write('trump/tweets_test_monday_trump_' + str(monday.date()) + '.csv', day_before_monday, monday)
+    monday = monday + timedelta(days=7)
+    day_before_monday = day_before_monday + timedelta(days=7)
