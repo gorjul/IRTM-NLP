@@ -6,12 +6,12 @@ import datetime
 from datetime import datetime
 from datetime import timedelta
 
-def search_and_write(file_name, day_before, monday):
+def search_and_write(file_name, day_before_monday, monday):
 
     start_time = datetime.fromtimestamp(timer())
     print("Start collecting Tweets at %s" % start_time.strftime('%H:%M:%S'))
-    tweetCri = got.manager.TweetCriteria().setUsername('realDonaldTrump').setSince(str(day_before.date())).setUntil(str(monday.date())).setMaxTweets(100)
-    # tweetCri = got.manager.TweetCriteria().setQuerySearch('trump').setSince(str(day_before.date())).setUntil(str(monday.date())).setMaxTweets(10000)
+    # tweetCri = got.manager.TweetCriteria().setUsername('realDonaldTrump').setSince(str(day_before_monday.date())).setUntil(str(monday.date())).setMaxTweets(100)
+    tweetCri = got.manager.TweetCriteria().setQuerySearch('trump').setSince(str(day_before_monday.date())).setUntil(str(monday.date())).setMaxTweets(10000)
     print('start searching', monday.date())
     tweets = got.manager.TweetManager.getTweets(tweetCri)
 
@@ -30,12 +30,12 @@ def search_and_write(file_name, day_before, monday):
     print("End writing Tweets at %s" % end_time.strftime('%H:%M:%S'))
 
 
-monday = datetime(2017, 10, 30, 00, 00)  # first monday
-day_before_monday = datetime(2017, 10, 29, 00, 00)  # first monday
+monday = datetime(2018, 3, 12, 00, 00)  # first monday
+day_before_monday = monday - timedelta(days=1)
 
-for count in range(26):
+for count in range(3):
     print(monday)
-    search_and_write('users/tweets_test_monday_' + str(monday.date()) + '.csv', day_before_monday, monday)
     # search_and_write('trump/tweets_test_monday_trump_' + str(monday.date()) + '.csv', day_before_monday, monday)
+    search_and_write('users/tweets_test_monday_' + str(monday.date()) + '.csv', day_before_monday, monday)
     monday = monday + timedelta(days=7)
     day_before_monday = day_before_monday + timedelta(days=7)

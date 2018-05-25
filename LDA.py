@@ -17,60 +17,75 @@ from sklearn.decomposition import NMF, LatentDirichletAllocation
 import gensim
 from gensim import corpora
 
+# directory
+from os import listdir
+from os.path import isfile, join
+
 no_topics = 20
 no_top_words = 10
 
 corpus = []
+usernames = []
 pos_tags = []
-files =[
-    "tweets_test_monday_2018-04-02.csv",
-    "tweets_test_monday_2018-04-09.csv",
-    "tweets_test_monday_2018-04-16.csv",
-    "tweets_test_monday_2018-04-23.csv",
-    "tweets_test_monday_2018-04-30.csv"
-]
-for f in files:
-    print(f)
-    with open(f, 'r') as csv_file:
-        for line in csv.reader(csv_file):
-            # compile corpus
-            tweet = line[3].decode('utf8')
-            print(tweet)
-            pos = max(tweet.find("http"), tweet.find("https"))
-            url = ""
-            if pos > -1:
-                count_whitespace = 0
-                for i in range(pos, len(tweet)):
-                    if tweet[i] in " ":
-                        count_whitespace = count_whitespace + 1
-                    if count_whitespace is 3:
-                        break
-                    url += tweet[i]
-                tweet = tweet.replace(url, "")  # re.sub(r"\s", "", url))
-            tweet = re.sub(r"pic\.twitter\.com\/\w*", "", tweet)  # remove pic urls
-            tweet = re.sub(r"[^@]+@[^@]+\.[^@]+", "", tweet)  # remove email addresses
-            tweet = re.sub(r"\@\w+", "", tweet)  # remove user names
-            # tweet = re.sub(r"n't", " not", tweet)
-            # tweet = re.sub(r"'ll", " will", tweet)
-            tweet = re.sub(r"[!\?,\"><()…’‘”“]", "", tweet)
-            tweet = re.sub(r"\s-\s", " ", tweet)
-            tweet = re.sub(r"\s\.\s|\.\s|\s\.|\.{3}", " ", tweet)
-            tweet = re.sub(r"\.$", "", tweet)
-            print(tweet)
+files = "users/"
+for f in listdir(files):
+    if isfile(join(files, f)):
+        print(f)
+        with open(join(files, f), 'r') as csv_file:
+            for line in csv.reader(csv_file):
+                # compile corpus
+                tweet = line[3].decode('utf8')
+                # print(tweet)
+                pos = max(tweet.find("http"), tweet.find("https"))
+                url = ""
+                if pos > -1:
+                    count_whitespace = 0
+                    for i in range(pos, len(tweet)):
+                        if tweet[i] in " ":
+                            count_whitespace = count_whitespace + 1
+                        if count_whitespace is 3:
+                            break
+                        url += tweet[i]
+                    tweet = tweet.replace(url, "")  # re.sub(r"\s", "", url))
+                tweet = re.sub(r"pic\.twitter\.com\/\w*", "", tweet)  # remove pic urls
+                tweet = re.sub(r"[^@]+@[^@]+\.[^@]+", "", tweet)  # remove email addresses
+                tweet = re.sub(r"\@\w+", "", tweet)  # remove user names
+                # tweet = re.sub(r"n't", " not", tweet)
+                # tweet = re.sub(r"'ll", " will", tweet)
+                tweet = re.sub(r"[!\?,\"><()…’‘”“]", "", tweet)
+                tweet = re.sub(r"\s-\s", " ", tweet)
+                tweet = re.sub(r"\s\.\s|\.\s|\s\.|\.{3}", " ", tweet)
+                tweet = re.sub(r"\.$", "", tweet)
+                # print(tweet)
 
-            tags = word_tokenize(tweet)
-            pos_tags.append(nltk.pos_tag(tags))
+                tags = word_tokenize(tweet)
+                pos_tags.append(nltk.pos_tag(tags))
 
-            corpus.append(tweet)
+                corpus.append(tweet)
+                usernames.append(line[2])
 
 print("----------------")
-print(pos_tags)
-
-exit(1)
 
 stop = set(stopwords.words('english'))
 exclude = set(string.punctuation)
 lemma = WordNetLemmatizer()
+
+
+def frequency_user(seq, idfun=None):
+    # order preserving
+    if idfun is None:
+        def idfun(x): return x
+    result = []
+    for item in seq:
+        marker = idfun(item)
+        # in old Python versions:
+        # if seen.has_key(marker)
+        # but in new ones:
+        if marker in result:
+            result[marker] += 1
+            continue
+        result[marker] = 1
+    return result
 
 
 def clean(doc):
@@ -87,6 +102,11 @@ dictionary = corpora.Dictionary(doc_clean)
 
 # Converting list of documents (corpus) into Document Term Matrix using dictionary prepared above.
 doc_term_matrix = [dictionary.doc2bow(doc) for doc in doc_clean]
+
+print(dictionary[:5])
+print(frequency_user(usernames)[:5])
+
+exit(1)
 
 print('gensim 1')
 # Creating the object for LDA model using gensim library
