@@ -21,12 +21,12 @@ from gensim import corpora
 from os import listdir
 from os.path import isfile, join
 
-no_topics = 20
-no_top_words = 10
+no_topics = 12
+no_top_words = 50
 
 corpus = []
 pos_tags = []
-files = "trump/"
+files = "users/"
 for f in listdir(files):
     if isfile(join(files, f)):
         print(f)
@@ -35,17 +35,19 @@ for f in listdir(files):
                 # compile corpus
                 tweet = line[3].decode('utf8')
                 # print(tweet)
-                pos = max(tweet.find("http"), tweet.find("https"))
-                url = ""
-                if pos > -1:
-                    count_whitespace = 0
-                    for i in range(pos, len(tweet)):
-                        if tweet[i] in " ":
-                            count_whitespace = count_whitespace + 1
-                        if count_whitespace is 3:
-                            break
-                        url += tweet[i]
-                    tweet = tweet.replace(url, "")  # re.sub(r"\s", "", url))
+                pos = 0
+                while pos > -1:
+                    pos = max(tweet.find("http"), tweet.find("https"))
+                    url = ""
+                    if pos > -1:
+                        count_whitespace = 0
+                        for i in range(pos, len(tweet)):
+                            if tweet[i] in " ":
+                                count_whitespace = count_whitespace + 1
+                            if count_whitespace is 3:
+                                break
+                            url += tweet[i]
+                        tweet = tweet.replace(url, "")  # re.sub(r"\s", "", url))
                 tweet = re.sub(r"pic\.twitter\.com\/\w*", "", tweet)  # remove pic urls
                 tweet = re.sub(r"[^@]+@[^@]+\.[^@]+", "", tweet)  # remove email addresses
                 tweet = re.sub(r"\@\w+", "", tweet)  # remove user names
@@ -63,6 +65,8 @@ for f in listdir(files):
                 corpus.append(tweet)
 
 print("----------------")
+
+print(len(corpus))
 
 stop = set(stopwords.words('english'))
 exclude = set(string.punctuation)
