@@ -25,9 +25,8 @@ no_topics = 20
 no_top_words = 10
 
 corpus = []
-usernames = []
 pos_tags = []
-files = "users/"
+files = "trump/"
 for f in listdir(files):
     if isfile(join(files, f)):
         print(f)
@@ -52,40 +51,22 @@ for f in listdir(files):
                 tweet = re.sub(r"\@\w+", "", tweet)  # remove user names
                 # tweet = re.sub(r"n't", " not", tweet)
                 # tweet = re.sub(r"'ll", " will", tweet)
-                tweet = re.sub(r"[!\?,\"><()…’‘”“]", "", tweet)
-                tweet = re.sub(r"\s-\s", " ", tweet)
-                tweet = re.sub(r"\s\.\s|\.\s|\s\.|\.{3}", " ", tweet)
-                tweet = re.sub(r"\.$", "", tweet)
+                # tweet = re.sub(r"[!\?,\"><()…’‘”“]", "", tweet)
+                # tweet = re.sub(r"\s-\s", " ", tweet)
+                # tweet = re.sub(r"\s\.\s|\.\s|\s\.|\.{3}", " ", tweet)
+                # tweet = re.sub(r"\.$", "", tweet)
                 # print(tweet)
 
                 tags = word_tokenize(tweet)
                 pos_tags.append(nltk.pos_tag(tags))
 
                 corpus.append(tweet)
-                usernames.append(line[2])
 
 print("----------------")
 
 stop = set(stopwords.words('english'))
 exclude = set(string.punctuation)
 lemma = WordNetLemmatizer()
-
-
-def frequency_user(seq, idfun=None):
-    # order preserving
-    if idfun is None:
-        def idfun(x): return x
-    result = []
-    for item in seq:
-        marker = idfun(item)
-        # in old Python versions:
-        # if seen.has_key(marker)
-        # but in new ones:
-        if marker in result:
-            result[marker] += 1
-            continue
-        result[marker] = 1
-    return result
 
 
 def clean(doc):
@@ -103,21 +84,6 @@ dictionary = corpora.Dictionary(doc_clean)
 # Converting list of documents (corpus) into Document Term Matrix using dictionary prepared above.
 doc_term_matrix = [dictionary.doc2bow(doc) for doc in doc_clean]
 
-print(dictionary[:5])
-print(frequency_user(usernames)[:5])
-
-exit(1)
-
-print('gensim 1')
-# Creating the object for LDA model using gensim library
-Lda = gensim.models.ldamodel.LdaModel
-
-print('gensim 2')
-# Running and Trainign LDA model on the document term matrix.
-ldamodel = Lda(doc_term_matrix, num_topics=no_topics, id2word=dictionary, passes=50)
-print(ldamodel.print_topics(num_topics=no_topics, num_words=no_top_words))
-print("----------------")
-
 
 def display_topics(model, feature_names, no_top_words):
     for topic_idx, topic in enumerate(model.components_):
@@ -125,26 +91,16 @@ def display_topics(model, feature_names, no_top_words):
         print " ".join([feature_names[i] for i in topic.argsort()[:-no_top_words - 1:-1]])
 
 
-no_features = 1000
+# no_features = 1000
 
-print('sklearn 1')
+print('nmf')
 # NMF is able to use tf-idf
-tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, max_features=no_features, stop_words='english')
+tfidf_vectorizer = TfidfVectorizer(max_df=0.95, min_df=2, stop_words='english')
 tfidf = tfidf_vectorizer.fit_transform(corpus)
 tfidf_feature_names = tfidf_vectorizer.get_feature_names()
 
-print('sklearn 2')
-# LDA can only use raw term counts for LDA because it is a probabilistic graphical model
-tf_vectorizer = CountVectorizer(max_df=0.95, min_df=2, max_features=no_features, stop_words='english')
-tf = tf_vectorizer.fit_transform(corpus)
-tf_feature_names = tf_vectorizer.get_feature_names()
 
 # Run NMF
 nmf = NMF(n_components=no_topics, random_state=1, alpha=.1, l1_ratio=.5, init='nndsvd').fit(tfidf)
 
-# Run LDA
-lda = LatentDirichletAllocation(n_topics=no_topics, max_iter=5, learning_method='online', learning_offset=50., random_state=0).fit(tf)
-
 display_topics(nmf, tfidf_feature_names, no_top_words)
-print("----------------")
-display_topics(lda, tf_feature_names, no_top_words)
